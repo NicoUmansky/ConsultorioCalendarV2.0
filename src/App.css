@@ -66,7 +66,7 @@ input {
   }
 
   .event-item {
-    width: 100%; /* Cambia a 100% de ancho en dispositivos más pequeños */
+    width: 90%; /* Cambia a 100% de ancho en dispositivos más pequeños */
   }
 }
 
