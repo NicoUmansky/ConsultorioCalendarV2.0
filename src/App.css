@@ -51,14 +51,14 @@ input {
 .event-item {
   width: 85%; /* Asegura que ocupe el ancho completo */
   padding: 15px;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Media queries para ajustes en dispositivos más pequeños */
 @media (max-width: 768px) {
   .container {
-    width: 95%;
+    width: 85%;
   }
 
   .events-grid {
