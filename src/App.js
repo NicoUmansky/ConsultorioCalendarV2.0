@@ -3,6 +3,7 @@ import './App.css';
 import { useSession, useSupabaseClient, useSessionContext } from '@supabase/auth-helpers-react';
 import DateTimePicker from 'react-datetime-picker';
 import { useState, useEffect } from 'react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 
 
@@ -86,7 +87,7 @@ function App() {
   
       if (!createCalendarResponse.ok) {
         console.error("Error creating calendar:", createCalendarResponse.statusText);
-        alert("Error creating calendar. Please try again.");
+        alert("Error creando calendario, prueba de nuevo.");
         return;
       }
   
@@ -124,7 +125,7 @@ function App() {
     if (createEventResponse.ok) {
       const eventData = await createEventResponse.json();
       // console.log(eventData);
-      alert("Event created, check your ConsultorioCalendar!");
+      alert("Evento creado! Revisa tu calendario");
       fetchCalendarEvents();
 
     } else {
@@ -172,7 +173,6 @@ function App() {
       alert("Error deleting event. Please try again.");
     }
   }
-
   async function handleRecordarTurno() {
     fetchCalendarEvents(); // Asegurarse de tener los eventos más actualizados
     const tomorrow = new Date();
@@ -194,7 +194,15 @@ function App() {
       alert("Error obteniendo los números de teléfono de los pacientes. Por favor, inténtalo de nuevo.");
       return;
     }
+  
+    // Llamar a enviarMensajeWhatsApp para cada paciente
+    patientContacts.forEach(patient => {
+      if (patient) {
+        enviarMensajeWhatsApp(patient.name, formatDate(tomorrowEvents.find(event => event.summary === patient.name).start.dateTime));
+      }
+    });
   }
+  
   const ak = "AIzaSyC1IHKQnsY55E_ofEqmbIIiv5NaBX18d20"
 
   async function getContactPhoneNumbers(contactName) {
@@ -241,7 +249,6 @@ function App() {
         phone: personPhoneNumbers
       };
       console.log(dataPatient);
-      alert(`El número de teléfono de ${personName} es ${personPhoneNumbers}`);
       return dataPatient;
   
     } catch (error) {
@@ -359,6 +366,51 @@ function App() {
     const options = { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false };
     return new Intl.DateTimeFormat('es-AR', options).format(new Date(dateString));
   }
+  async function enviarMensajeWhatsApp(name, startTime) {
+    const dataPatient = await getContactPhoneNumbers(name);
+    const phone = dataPatient.phone;
+  
+    if (!phone) {
+      alert("Error obteniendo el número de teléfono del paciente. Por favor, inténtalo de nuevo.");
+      return;
+    }
+  
+    // Elimina caracteres no numéricos
+    const cleanedPhone = phone.replace(/\D/g, '');
+    if (cleanedPhone.length === 13){
+      const inicio = startTime.split(" ")[1];
+      const message = `Hola ${name}, te recuerdo que mañana a las ${inicio} tenés un turno reservado en el consultorio odontológico en Cerviño 3527, 1A. En el caso de que no pudieras venir, por favor notifícalo. ¡Gracias!`;
+  
+      alert(`El número de teléfono de ${name} es ${cleanedPhone}`);
+      const whatsappLink = `https://wa.me/+${cleanedPhone}?text=${encodeURIComponent(message)}`;
+  
+      // Abre la ventana de WhatsApp con el mensaje predefinido
+      window.open(whatsappLink, '_blank');
+  
+    }
+    else if(cleanedPhone.length === 10){
+      const inicio = startTime.split(" ")[1];
+      const message = `Hola ${name}, te recuerdo que mañana a las ${inicio} tenés un turno reservado en el consultorio odontológico en Cerviño 3527, 1A. En el caso de que no pudieras venir, por favor notifícalo. ¡Gracias!`;
+  
+      alert(`El número de teléfono de ${name} es +549${phone}`);
+      const whatsappLink = `https://wa.me/+549${cleanedPhone}?text=${encodeURIComponent(message)}`;
+  
+      // Abre la ventana de WhatsApp con el mensaje predefinido
+      window.open(whatsappLink, '_blank');
+    }
+    else if (cleanedPhone.length === 8){
+      const inicio = startTime.split(" ")[1];
+      const message = `Hola ${name}, te recuerdo que mañana a las ${inicio} tenés un turno reservado en el consultorio odontológico en Cerviño 3527, 1A. En el caso de que no pudieras venir, por favor notifícalo. ¡Gracias!`;
+  
+      alert(`El número de teléfono de ${name} es +54911${cleanedPhone}`);
+      const whatsappLink = `https://wa.me/+54911${cleanedPhone}?text=${encodeURIComponent(message)}`;
+  
+      // Abre la ventana de WhatsApp con el mensaje predefinido
+      window.open(whatsappLink, '_blank');
+  
+    }
+
+  }
 
   return (
     <div className="App">
@@ -375,7 +427,7 @@ function App() {
             <b><p>Nombre Paciente</p></b>
             <input placeholder= "Nombre del Paciente"type="text" onChange={(e) => setEventName(e.target.value)} />
             <b><p>Observacion</p></b>
-            <input placeholder="Si no esta agendado poner el numero"type="text" onChange={(e) => setEventDescription(e.target.value)} />
+            <input placeholder="Observaciones"type="text" onChange={(e) => setEventDescription(e.target.value)} />
             <button onClick={() => createCalendarEvent()}><b>Crear Evento</b></button>
             <p></p>
             <hr />
@@ -397,7 +449,10 @@ function App() {
                 <h4>{event.summary}</h4>
                 <p><b>Inicio:</b> {formatDate(event.start.dateTime)}</p>
                 <p><b>Fin:</b> {formatDate(event.end.dateTime)}</p>
-                <p>Descripcion: {event.description}</p>
+                {event.description && <p><b>Descripción:</b> {event.description}</p>}
+                <button className="recordar-turno-btn" onClick={() => enviarMensajeWhatsApp(event.summary, formatDate(event.start.dateTime))}>
+              <FaWhatsapp /> Notificar a un Paciente
+            </button>
                 <button onClick={() => deleteCalendarEvent(event.id)}>🗑️</button>
                 <hr />
               </div>
