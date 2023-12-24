@@ -241,6 +241,7 @@ function App() {
         phone: personPhoneNumbers
       };
       console.log(dataPatient);
+      alert(`El número de teléfono de ${personName} es ${personPhoneNumbers}`);
       return dataPatient;
   
     } catch (error) {
