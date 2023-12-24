@@ -1,38 +1,73 @@
+/* App.css */
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100vw;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  overflow-x: hidden;
+  text-align: center;
+  background-color: rgb(133, 127, 121);
 }
 
-.App-link {
-  color: #61dafb;
+.container {
+  width: 90%;
+  margin: 30px auto;
+  background-color: rgb(197, 166, 126);
+  border-radius: 10px;
+  padding: 20px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+h2 {
+  color: #333;
+}
+
+button {
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 16px;
+  
+  background-color: wheat;
+  margin: 5px;
+}
+
+hr {
+  margin: 20px 0;
+}
+
+input {
+  width: 80%;
+  padding: 10px;
+  background-color: white;
+  margin: 5px 0;
+}
+
+.events-grid {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.event-item {
+  width: 85%; /* Asegura que ocupe el ancho completo */
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Media queries para ajustes en dispositivos más pequeños */
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
   }
-  to {
-    transform: rotate(360deg);
+
+  .events-grid {
+    grid-template-columns: 1fr; /* Cambia a una sola columna en dispositivos más pequeños */
+  }
+
+  .event-item {
+    width: 100%; /* Cambia a 100% de ancho en dispositivos más pequeños */
   }
 }
+
+/* Add more styles as needed */
