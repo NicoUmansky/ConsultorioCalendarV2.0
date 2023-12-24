@@ -5,12 +5,13 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { createClient } from '@supabase/supabase-js';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { config } from 'dotenv';
-config();
+
+const supabaseUrl = "https://psiosmajmdqunenvdrcy.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzaW9zbWFqbWRxdW5lbnZkcmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDMwODk3MTksImV4cCI6MjAxODY2NTcxOX0.VVu53_ZzCuEfjDU-qSMl2h_CwO84Gd9_7kITJpzhKNg"
 
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_KEY
+  "https://psiosmajmdqunenvdrcy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzaW9zbWFqbWRxdW5lbnZkcmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDMwODk3MTksImV4cCI6MjAxODY2NTcxOX0.VVu53_ZzCuEfjDU-qSMl2h_CwO84Gd9_7kITJpzhKNg"
 );
 
 ReactDOM.render(

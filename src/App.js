@@ -39,6 +39,9 @@ function App() {
       alert("Error logging in to Google provider with Supabase");
       console.log(error);
     }
+    else {
+      console.log("Logged in to Google provider with Supabase");
+    }
   }
 
   async function signOut() {
@@ -120,7 +123,7 @@ function App() {
   
     if (createEventResponse.ok) {
       const eventData = await createEventResponse.json();
-      console.log(eventData);
+      // console.log(eventData);
       alert("Event created, check your ConsultorioCalendar!");
       fetchCalendarEvents();
 
@@ -185,67 +188,111 @@ function App() {
         eventDate.getDate() === tomorrow.getDate()
       );
     });
-  
-    const nextDaySummaries = tomorrowEvents.map(event => event.summary);
-    console.log("Próximos eventos del día siguiente:", nextDaySummaries);
-  
     // Obtener el número de teléfono para cada paciente
-    const phoneNumbers = await Promise.all(nextDaySummaries.map(getContactPhoneNumber));
-  
-    // Hacer algo con la lista de números de teléfono, por ejemplo, imprimirlos
-    phoneNumbers.forEach((phoneNumber, index) => {
-      console.log(`Número de teléfono para ${nextDaySummaries[index]}: ${phoneNumber}`);
-    });
-  } 
+    const patientContacts = await Promise.all(tomorrowEvents.map(event => getContactPhoneNumbers(event.summary)));
+    if (!patientContacts) {
+      alert("Error obteniendo los números de teléfono de los pacientes. Por favor, inténtalo de nuevo.");
+      return;
+    }
+  }
+  const ak = "AIzaSyC1IHKQnsY55E_ofEqmbIIiv5NaBX18d20"
 
-  async function getContactPhoneNumber(contactName) {
+  async function getContactPhoneNumbers(contactName) {
     try {
-      const url = 'https://people.googleapis.com/v1/people/me/connections';
-      const params = {
-        personFields: 'names,phoneNumbers',
-        resourceName: 'people/me/connections',
-        pageSize: 1,
-        query: contactName,
-      };
-      const apiUrl = new URL(url);
-      apiUrl.search = new URLSearchParams(params).toString();
-  
-      console.log('URL completa:', apiUrl.toString());
-  
-      const response = await fetch(apiUrl.toString(), {
-        method: 'GET',
+      const connectionsResponse = await fetch(`https://people.googleapis.com/v1/people:searchContacts?query=${contactName}&readMask=phoneNumbers%2Cnames&key=${ak}`, {
+        method: "GET",
         headers: {
           'Authorization': 'Bearer ' + session.provider_token,
         },
       });
   
-      if (!response.ok) {
-        console.error('Error en la solicitud de contactos:', response.status, response.statusText);
-        const errorBody = await response.text();
-        console.error('Cuerpo del error:', errorBody);
+      if (!connectionsResponse.ok) {
+        console.error("Error obteniendo la lista de contactos:", connectionsResponse.statusText);
         return null;
       }
   
-      const data = await response.json();
+      const connectionsData = await connectionsResponse.json();
   
-      const contact = data.connections[0];
+      if (!connectionsData.results || connectionsData.results.length === 0) {
+        // El contacto no existe, mostrar un popup para agregar el nuevo contacto
+        const shouldCreateContact = window.confirm(`El contacto ${contactName} no existe. ¿Deseas crearlo?`);
   
-      if (contact && contact.phoneNumbers && contact.phoneNumbers.length > 0) {
-        const phoneNumber = contact.phoneNumbers[0].value;
-        console.log(`Número de teléfono para ${contactName}: ${phoneNumber}`);
-        return phoneNumber;
-      } else {
-        console.log(`No se encontró el número de teléfono para ${contactName}`);
-        return null;
+        if (shouldCreateContact) {
+          const phoneNumber = prompt("Ingresa el número de teléfono:");
+          if (!phoneNumber) {
+            alert("Número de teléfono no válido. La operación fue cancelada.");
+            return null;
+          }
+  
+          // Crear el nuevo contacto
+          await createContact(contactName, phoneNumber);
+  
+          // Volver a buscar el contacto después de la creación
+          return await getContactPhoneNumbers(contactName);
+        } else {
+          return null; // Usuario decidió no crear el contacto
+        }
       }
+  
+      const personName = connectionsData.results[0].person.names[0].displayName;
+      const personPhoneNumbers = connectionsData.results[0].person.phoneNumbers[0].value;
+      let dataPatient = {
+        name: personName,
+        phone: personPhoneNumbers
+      };
+      console.log(dataPatient);
+      return dataPatient;
+  
     } catch (error) {
-      console.error('Error en la solicitud de contactos:', error.message);
+      console.error('Error al obtener los números de teléfono de los contactos:', error.message);
+      return null;
+    }
+  }
+  
+  async function createContact(contactName, phoneNumber) {
+    try {
+      // Dividir el nombre completo en nombre y apellido
+      const [givenName, familyName] = contactName.split(" ");
+  
+      const createContactResponse = await fetch(`https://people.googleapis.com/v1/people:createContact?key=${ak}`, {
+        method: "POST",
+        headers: {
+          'Authorization': 'Bearer ' + session.provider_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          "names": [
+            {
+              "givenName": givenName,
+              "familyName": familyName || "", // En caso de que no haya apellido
+            }
+          ],
+          "phoneNumbers": [
+            {
+              "value": phoneNumber
+            }
+          ]
+        }),
+      });
+  
+      if (!createContactResponse.ok) {
+        console.error("Error creando el contacto:", createContactResponse.statusText);
+        alert("Error creando el contacto. Por favor, inténtalo de nuevo.");
+        return null;
+      }
+  
+      const createdContactData = await createContactResponse.json();
+      console.log("Contacto creado:", createdContactData);
+      return createdContactData;
+  
+    } catch (error) {
+      console.error('Error al crear el contacto:', error.message);
       return null;
     }
   }
   
   
-
+  
   
 
   async function fetchCalendarEvents() {
