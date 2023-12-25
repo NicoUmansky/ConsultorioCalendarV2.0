@@ -1,19 +1,14 @@
-import logo from './logo.svg';
 import './App.css';
 import { useSession, useSupabaseClient, useSessionContext } from '@supabase/auth-helpers-react';
 import DateTimePicker from 'react-datetime-picker';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 
 
 function App() {
-  const [ start, setStart ] = useState(new Date());
-  
-  const [ end, setEnd ] = useState(new Date());
-  const [ eventName, setEventName ] = useState("");
-  const [ eventDescription, setEventDescription ] = useState("");
   const [eventsList, setEventsList] = useState([]);
+  const [calendarID, setCalendarID] = useState("");
   const [showEvents, setShowEvents] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [editEventName, setEditEventName] = useState("");
@@ -21,7 +16,9 @@ function App() {
   const [editStart, setEditStart] = useState(new Date());
   const [editEnd, setEditEnd] = useState(new Date());
   const [eventsContainerStyle, setEventsContainerStyle] = useState({ display: 'none' });
-
+  const [showContactOptions, setShowContactOptions] = useState(false);
+  const [connectionsData, setConnectionsData] = useState(null);
+  const [contactOptions, setContactOptions] = useState([]);
 
 
   const session = useSession(); // tokens, when session exists we have a user
@@ -67,14 +64,13 @@ function App() {
   
     if (!calendarsResponse.ok) {
       console.error("Error fetching calendars:", calendarsResponse.statusText);
-      alert("Error fetching calendars. Please try again.");
+      alert("Error de sesión, por favor iniciar nuevamente.");
       return;
     }
   
     const calendarsData = await calendarsResponse.json();
     const existingCalendar = calendarsData.items.find(calendar => calendar.summary === calendarName);
   
-    let calendarId;
   
     if (!existingCalendar) {
       // Calendar not found, create it
@@ -97,28 +93,28 @@ function App() {
       }
   
       const createdCalendarData = await createCalendarResponse.json();
-      calendarId = createdCalendarData.id;
+      setCalendarID(createdCalendarData.id);
     } else {
       // Calendar found, use its id
-      calendarId = existingCalendar.id;
+      setCalendarID(existingCalendar.id);
     }
   
     // Create the event
     const event = {
-      'summary': eventName,
-      'description': eventDescription,
+      'summary': editEventName,
+      'description': editEventDescription,
       'start': {
-        'dateTime': start.toISOString(),
+        'dateTime': editStart.toISOString(),
         'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
       'end': {
-        'dateTime': end.toISOString(),
+        'dateTime': editEnd.toISOString(),
         'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
     };
   
     // Add event to the specified calendar
-    const createEventResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+    const createEventResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events`, {
       method: "POST",
       headers: {
         'Authorization': 'Bearer ' + session.provider_token,
@@ -128,9 +124,11 @@ function App() {
     });
   
     if (createEventResponse.ok) {
-      const eventData = await createEventResponse.json();
-      // console.log(eventData);
       alert("Evento creado! Revisa tu calendario");
+      setEditEventName("");
+      setEditEventDescription("");
+      setEditStart(new Date());
+      setEditEnd(new Date());
       fetchCalendarEvents();
 
     } else {
@@ -156,13 +154,11 @@ function App() {
     const calendarsData = await calendarsResponse.json();
     const existingCalendar = calendarsData.items.find(calendar => calendar.summary === calendarName);
   
-    let calendarId;
-
     if (existingCalendar) {
-      calendarId = existingCalendar.id;
+      setCalendarID(existingCalendar.id);
     }
     // Función para eliminar un evento del calendario
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}`, {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events/${eventId}`, {
       method: "DELETE",
       headers: {
         'Authorization': 'Bearer ' + session.provider_token,
@@ -194,7 +190,7 @@ function App() {
       );
     });
     // Obtener el número de teléfono para cada paciente
-    const patientContacts = await Promise.all(tomorrowEvents.map(event => getContactPhoneNumbers(event.summary)));
+    const patientContacts = await Promise.all(tomorrowEvents.map(event => getContactPhoneNumbers(event.summary, event.id)));
     if (!patientContacts) {
       alert("Error obteniendo los números de teléfono de los pacientes. Por favor, inténtalo de nuevo.");
       return;
@@ -203,16 +199,16 @@ function App() {
     // Llamar a enviarMensajeWhatsApp para cada paciente
     patientContacts.forEach(patient => {
       if (patient) {
-        enviarMensajeWhatsApp(patient.name, formatDate(tomorrowEvents.find(event => event.summary === patient.name).start.dateTime));
+        enviarMensajeWhatsApp(patient.name, formatDate(tomorrowEvents.find(event => event.summary === patient.name).start.dateTime), tomorrowEvents.find(event => event.summary === patient.name).id);
       }
     });
   }
   
   const ak = "AIzaSyC1IHKQnsY55E_ofEqmbIIiv5NaBX18d20"
 
-  async function getContactPhoneNumbers(contactName) {
+  async function getContactPhoneNumbers(contactName, eventId) {
     try {
-      const connectionsResponse = await fetch(`https://people.googleapis.com/v1/people:searchContacts?query=${contactName}&readMask=phoneNumbers%2Cnames&key=${ak}`, {
+      const connectionsResponse = await fetch(`https://people.googleapis.com/v1/people:searchContacts?pageSize=15&query=${contactName}&readMask=phoneNumbers%2Cnames&key=${ak}`, {
         method: "GET",
         headers: {
           'Authorization': 'Bearer ' + session.provider_token,
@@ -225,8 +221,9 @@ function App() {
       }
   
       const connectionsData = await connectionsResponse.json();
+      console.log("Contactos:", connectionsData);
   
-      if (!connectionsData.results || connectionsData.results.length === 0) {
+      if (!connectionsData.results || connectionsData.results.length === 0 || !connectionsData.results[0].person) {
         // El contacto no existe, mostrar un popup para agregar el nuevo contacto
         const shouldCreateContact = window.confirm(`El contacto ${contactName} no existe. ¿Deseas crearlo?`);
   
@@ -245,23 +242,129 @@ function App() {
         } else {
           return null; // Usuario decidió no crear el contacto
         }
+      } 
+      else if (connectionsData.results.length === 1) {
+        const personName = connectionsData.results[0].person.names[0].displayName;
+        const personPhoneNumbers = connectionsData.results[0].person.phoneNumbers[0].value;
+        let dataPatient = {
+          name: personName,
+          phone: personPhoneNumbers
+        };
+        console.log(dataPatient);
+        return dataPatient;
+      }     
+      else if (connectionsData.results.length > 1) {
+        // Hay más de un contacto con ese nombre, debe elegir el deseado
+
+        const options = connectionsData.results.map((result, index) => {
+          const contact = result.person;
+          return {
+            index: index + 1,
+            displayName: contact.names[0].displayName,
+            eventId: eventId
+          };
+        });
+        setContactOptions(options);
+        setConnectionsData(connectionsData)
+        console.log(options);
+        setShowContactOptions(true);
+
       }
-  
-      const personName = connectionsData.results[0].person.names[0].displayName;
-      const personPhoneNumbers = connectionsData.results[0].person.phoneNumbers[0].value;
-      let dataPatient = {
-        name: personName,
-        phone: personPhoneNumbers
-      };
-      console.log(dataPatient);
-      return dataPatient;
-  
+
+
     } catch (error) {
       console.error('Error al obtener los números de teléfono de los contactos:', error.message);
       return null;
     }
   }
+
+  const handleContactOptionConfirm = async () => {
+    try {
+      const index = parseInt(document.querySelector("#contactOptionsSelect").value);
+      if (!index || index < 1 || index > contactOptions.length) {
+        alert("Opción no válida. La operación fue cancelada.");
+        return;
+      }
   
+      // Obtener el contacto seleccionado
+      const selectedContact = connectionsData.results[index - 1].person;
+  
+      // Obtener detalles del evento (fecha de inicio y fecha de fin)
+      const eventDetailsResponse = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events/${contactOptions[index - 1].eventId}`,
+        {
+          method: "GET",
+          headers: {
+            'Authorization': 'Bearer ' + session.provider_token,
+          },
+        }
+      );
+  
+      if (!eventDetailsResponse.ok) {
+        console.error("Error obteniendo detalles del evento:", eventDetailsResponse.statusText);
+        alert("Error obteniendo detalles del evento. La operación fue cancelada.");
+        return;
+      }
+  
+      const eventDetailsData = await eventDetailsResponse.json();
+      if (eventDetailsData.start && eventDetailsData.end) {
+        // Detalles del evento obtenidos con éxito
+  
+        // Crear el objeto updatedEvent con los detalles del evento
+        const updatedEvent = {
+          summary: selectedContact.names[0].displayName,
+          eventId: contactOptions[index - 1].eventId,
+          start: {
+            dateTime: eventDetailsData.start.dateTime,
+            timeZone: eventDetailsData.start.timeZone,
+          },
+          end: {
+            dateTime: eventDetailsData.end.dateTime,
+            timeZone: eventDetailsData.end.timeZone,
+          },
+        };
+  
+        // Actualizar el evento en el calendario
+        await updateCalendarEvent(updatedEvent);
+  
+        // Cierra el modal
+        setShowContactOptions(false);
+      } else {
+        console.error("Detalles del evento no encontrados.");
+        alert("Detalles del evento no encontrados. La operación fue cancelada.");
+      }
+    } catch (error) {
+      console.error('Error al confirmar la opción del contacto:', error.message);
+    }
+  };
+  
+  // Función para actualizar el evento en el calendario
+  const updateCalendarEvent = async (updatedEvent) => {
+    try {  
+      const updateEventResponse = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events/${updatedEvent.eventId}`,
+        {
+          method: "PUT",
+          headers: {
+            'Authorization': 'Bearer ' + session.provider_token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedEvent),
+        }
+      );
+  
+      if (updateEventResponse.ok) {
+        console.log(`Event with ID ${updatedEvent.id} updated.`);
+        // Recargar la lista de eventos después de la actualización
+        fetchCalendarEvents();
+      } else {
+        console.error("Error updating event:", updateEventResponse.statusText);
+        alert("Error updating event. Please try again.");
+      }
+    } catch (error) {
+      console.error('Error al actualizar el evento:', error.message);
+    }
+  };
   async function createContact(contactName, phoneNumber) {
     try {
       // Dividir el nombre completo en nombre y apellido
@@ -293,7 +396,7 @@ function App() {
         alert("Error creando el contacto. Por favor, inténtalo de nuevo.");
         return null;
       }
-  
+      
       const createdContactData = await createContactResponse.json();
       console.log("Contacto creado:", createdContactData);
       return createdContactData;
@@ -319,11 +422,6 @@ function App() {
       },
     });
 
-    if (!calendarsResponse.ok) {
-      console.error("Error fetching calendars:", calendarsResponse.statusText);
-      alert("Error fetching calendars. Please try again.");
-      return;
-    }
 
     const calendarsData = await calendarsResponse.json();
     const existingCalendar = calendarsData.items.find(calendar => calendar.summary === calendarName);
@@ -333,10 +431,10 @@ function App() {
       return;
     }
 
-    const calendarId = existingCalendar.id;
+    setCalendarID(existingCalendar.id);
 
     // Obtener eventos del calendario
-    const eventsResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+    const eventsResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events`, {
       method: "GET",
       headers: {
         'Authorization': 'Bearer ' + session.provider_token,
@@ -371,10 +469,13 @@ function App() {
     const options = { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false };
     return new Intl.DateTimeFormat('es-AR', options).format(new Date(dateString));
   }
-  async function enviarMensajeWhatsApp(name, startTime) {
-    const dataPatient = await getContactPhoneNumbers(name);
-    const phone = dataPatient.phone;
-  
+  async function enviarMensajeWhatsApp(name, startTime, eventId) {
+    const dataPatient = await getContactPhoneNumbers(name, eventId);
+    let phone = "";
+    if(dataPatient.phone){
+      phone = dataPatient.phone;
+    }
+
     if (!phone) {
       alert("Error obteniendo el número de teléfono del paciente. Por favor, inténtalo de nuevo.");
       return;
@@ -386,7 +487,7 @@ function App() {
       const inicio = startTime.split(" ")[1];
       const message = `Hola ${name}, te recuerdo que mañana a las ${inicio} tenés un turno reservado en el consultorio odontológico en Cerviño 3527, 1A. En el caso de que no pudieras venir, por favor notifícalo. ¡Gracias!`;
   
-      alert(`El número de teléfono de ${name} es ${cleanedPhone}`);
+      // alert(`El número de teléfono de ${name} es ${cleanedPhone}`);
       const whatsappLink = `https://wa.me/+${cleanedPhone}?text=${encodeURIComponent(message)}`;
   
       // Abre la ventana de WhatsApp con el mensaje predefinido
@@ -418,23 +519,32 @@ function App() {
   }
   const handleStartChange = (newStart) => {
     // Actualizar la hora de inicio
-    setStart(newStart);
+    setEditStart(newStart);
 
     // Calcular la hora de finalización (1 hora después de la hora de inicio)
     const newEnd = new Date(newStart);
     newEnd.setHours(newEnd.getHours() + 1);
-    setEnd(newEnd);
+    setEditEnd(newEnd);
   };
 
   const handleEditEvent = (event) => {
     // Al hacer clic en el botón de edición, establecer el evento actual en el estado
     setEditingEvent(event);
-    
-    // Cargar los datos del evento en los estados específicos para la edición
-    setEditEventName(event.summary || "");
-    setEditEventDescription(event.description || "");
-    setEditStart(new Date(event.start.dateTime));
-    setEditEnd(new Date(event.end.dateTime));
+  
+    // Elimina la llamada a deleteCalendarEvent, ya que esto podría afectar la obtención del ID
+    deleteCalendarEvent(event.id);
+  
+    // Asegúrate de que el ID del evento esté definido antes de usarlo
+    if (event.id) {
+      // Cargar los datos del evento en los estados específicos para la edición
+      setEditEventName(event.summary || "");
+      setEditEventDescription(event.description || "");
+      setEditStart(new Date(event.start.dateTime));
+      setEditEnd(new Date(event.end.dateTime));
+    } else {
+      console.error("ID del evento no definido.");
+      // Puedes mostrar un mensaje de error o manejar la situación de otra manera
+    }
   };
   return (
     <div className="App">
@@ -445,9 +555,9 @@ function App() {
             <button style= {{backgroundColor: "red"}}onClick={() => signOut()}><b>Sign Out</b></button>
             <hr />
             <p><b>Inicio de tu Evento</b></p>
-            <DateTimePicker onChange={handleStartChange} value={start} />
+            <DateTimePicker onChange={handleStartChange} value={editStart} />
             <p><b>Finalizacion de tu Evento</b></p>
-            <DateTimePicker onChange={setEnd} value={end} />
+            <DateTimePicker onChange={setEditEnd} value={editEnd} />
             <b><p>Nombre Paciente</p></b>
             <input placeholder="Nombre del Paciente" type="text" onChange={(e) => setEditEventName(e.target.value)} value={editEventName} />
             <b><p>Observacion</p></b>
@@ -463,7 +573,7 @@ function App() {
                 setEventsContainerStyle({ display: 'none' });
               }
             }}>
-              {showEvents ? 'Ocultar Eventos' : 'Ver Eventos Creados'}
+              <b>{showEvents ?  'Ocultar Eventos' : 'Ver Eventos Creados'}</b>
             </button>  
             <button className="recordar-turno-btn" onClick={() => handleRecordarTurno()}><b>Recordar Turno</b></button>
 
@@ -474,18 +584,33 @@ function App() {
                 <p><b>Inicio:</b> {formatDate(event.start.dateTime)}</p>
                 <p><b>Fin:</b> {formatDate(event.end.dateTime)}</p>
                 {event.description && <p><b>Descripción:</b> {event.description}</p>}
-                <button className="recordar-turno-btn" onClick={() => enviarMensajeWhatsApp(event.summary, formatDate(event.start.dateTime))}>
+                <button className="recordar-turno-btn" onClick={() => enviarMensajeWhatsApp(event.summary, formatDate(event.start.dateTime), event.id)}>
               <FaWhatsapp /> Notificar a un Paciente
             </button>
                 <button onClick={() => deleteCalendarEvent(event.id)}>🗑️</button>
-                <button className="edit-event-btn" onClick={() => handleEditEvent(event)}>
-                ✏️ Editar
-                  </button>
+                <button className="edit-event-btn" onClick={() => handleEditEvent(event)}>✏️</button>
                 <hr />
               </div>
             ))}
+            {showContactOptions && (
+        <div className="contact-options-modal">
+          <button className="close-modal-btn" onClick={() => setShowContactOptions(false)}>x</button>
+          <p className='text-modal'>Selecciona el contacto deseado:</p>
+          <select id="contactOptionsSelect">
+            {contactOptions.map((option) => (
+                <option id={option.eventId}key={option.index} value={option.index}>
+                  {option.displayName}
+                </option>
+            ))}
+          </select>
+          <button onClick={handleContactOptionConfirm}>
+            Confirmar
+          </button>
+        </div>
+      )}
           </div>
           </>
+          
         ) : (
           <>
             <button onClick={() => googleSignIn()}>Inicia Sesion con Google</button>
