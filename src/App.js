@@ -15,6 +15,11 @@ function App() {
   const [ eventDescription, setEventDescription ] = useState("");
   const [eventsList, setEventsList] = useState([]);
   const [showEvents, setShowEvents] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editEventName, setEditEventName] = useState("");
+  const [editEventDescription, setEditEventDescription] = useState("");
+  const [editStart, setEditStart] = useState(new Date());
+  const [editEnd, setEditEnd] = useState(new Date());
   const [eventsContainerStyle, setEventsContainerStyle] = useState({ display: 'none' });
 
 
@@ -411,7 +416,26 @@ function App() {
     }
 
   }
+  const handleStartChange = (newStart) => {
+    // Actualizar la hora de inicio
+    setStart(newStart);
 
+    // Calcular la hora de finalización (1 hora después de la hora de inicio)
+    const newEnd = new Date(newStart);
+    newEnd.setHours(newEnd.getHours() + 1);
+    setEnd(newEnd);
+  };
+
+  const handleEditEvent = (event) => {
+    // Al hacer clic en el botón de edición, establecer el evento actual en el estado
+    setEditingEvent(event);
+    
+    // Cargar los datos del evento en los estados específicos para la edición
+    setEditEventName(event.summary || "");
+    setEditEventDescription(event.description || "");
+    setEditStart(new Date(event.start.dateTime));
+    setEditEnd(new Date(event.end.dateTime));
+  };
   return (
     <div className="App">
       <div className="container">
@@ -421,13 +445,13 @@ function App() {
             <button style= {{backgroundColor: "red"}}onClick={() => signOut()}><b>Sign Out</b></button>
             <hr />
             <p><b>Inicio de tu Evento</b></p>
-            <DateTimePicker onChange={setStart} value={start} />
+            <DateTimePicker onChange={handleStartChange} value={start} />
             <p><b>Finalizacion de tu Evento</b></p>
             <DateTimePicker onChange={setEnd} value={end} />
             <b><p>Nombre Paciente</p></b>
-            <input placeholder= "Nombre del Paciente"type="text" onChange={(e) => setEventName(e.target.value)} />
+            <input placeholder="Nombre del Paciente" type="text" onChange={(e) => setEditEventName(e.target.value)} value={editEventName} />
             <b><p>Observacion</p></b>
-            <input placeholder="Observaciones"type="text" onChange={(e) => setEventDescription(e.target.value)} />
+            <input placeholder="Observaciones" type="text" onChange={(e) => setEditEventDescription(e.target.value)} value={editEventDescription} />
             <button onClick={() => createCalendarEvent()}><b>Crear Evento</b></button>
             <p></p>
             <hr />
@@ -454,6 +478,9 @@ function App() {
               <FaWhatsapp /> Notificar a un Paciente
             </button>
                 <button onClick={() => deleteCalendarEvent(event.id)}>🗑️</button>
+                <button className="edit-event-btn" onClick={() => handleEditEvent(event)}>
+                ✏️ Editar
+                  </button>
                 <hr />
               </div>
             ))}
