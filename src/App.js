@@ -154,8 +154,11 @@ function App() {
     const calendarsData = await calendarsResponse.json();
     const existingCalendar = calendarsData.items.find(calendar => calendar.summary === calendarName);
     let idCalendario;
+
+    
     if (existingCalendar) {
       idCalendario = existingCalendar.id;
+      setCalendarID(idCalendario)
     }
     // Función para eliminar un evento del calendario
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${idCalendario}/events/${eventId}`, {
@@ -433,6 +436,7 @@ function App() {
     }
 
     const idCalendario = existingCalendar.id;
+    setCalendarID(idCalendario);
 
     // Obtener eventos del calendario
     const eventsResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${idCalendario}/events`, {
