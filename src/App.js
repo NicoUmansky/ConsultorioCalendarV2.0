@@ -431,10 +431,10 @@ function App() {
       return;
     }
 
-    setCalendarID(existingCalendar.id);
+    const idCalendario = existingCalendar.id;
 
     // Obtener eventos del calendario
-    const eventsResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events`, {
+    const eventsResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${idCalendario}/events`, {
       method: "GET",
       headers: {
         'Authorization': 'Bearer ' + session.provider_token,
@@ -443,7 +443,7 @@ function App() {
 
     if (!eventsResponse.ok) {
       console.error("Error fetching events:", eventsResponse.statusText);
-      alert("Error fetching events. Please try again.");
+      alert("Error mostrando eventos, volver a intentar.");
       return;
     }
 
