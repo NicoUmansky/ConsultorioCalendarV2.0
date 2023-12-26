@@ -329,7 +329,8 @@ function App() {
   
         // Cierra el modal
         setShowContactOptions(false);
-      } else {
+        enviarMensajeWhatsApp(updatedEvent.summary, updatedEvent.start.dateTime, updatedEvent.eventId)
+       } else {
         console.error("Detalles del evento no encontrados.");
         alert("Detalles del evento no encontrados. La operación fue cancelada.");
       }
