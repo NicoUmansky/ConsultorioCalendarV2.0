@@ -71,7 +71,7 @@ function App() {
     const calendarsData = await calendarsResponse.json();
     const existingCalendar = calendarsData.items.find(calendar => calendar.summary === calendarName);
   
-  
+    let CalendarId;
     if (!existingCalendar) {
       // Calendar not found, create it
       const createCalendarResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars", {
@@ -91,12 +91,12 @@ function App() {
         alert("Error creando calendario, prueba de nuevo.");
         return;
       }
-  
+      
       const createdCalendarData = await createCalendarResponse.json();
-      let CalendarId = createdCalendarData.id
+      CalendarId = createdCalendarData.id
     } else {
       // Calendar found, use its id
-        let CalendarId = existingCalendar.id
+      CalendarId = existingCalendar.id
     }
   
     // Create the event
