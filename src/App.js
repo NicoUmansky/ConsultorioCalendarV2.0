@@ -93,10 +93,10 @@ function App() {
       }
   
       const createdCalendarData = await createCalendarResponse.json();
-      setCalendarID(createdCalendarData.id);
+      let CalendarId = createdCalendarData.id
     } else {
       // Calendar found, use its id
-      setCalendarID(existingCalendar.id);
+        let CalendarId = existingCalendar.id
     }
   
     // Create the event
@@ -114,7 +114,7 @@ function App() {
     };
   
     // Add event to the specified calendar
-    const createEventResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarID}/events`, {
+    const createEventResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${CalendarId}/events`, {
       method: "POST",
       headers: {
         'Authorization': 'Bearer ' + session.provider_token,
