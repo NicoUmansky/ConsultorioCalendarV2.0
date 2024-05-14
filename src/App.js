@@ -192,20 +192,24 @@ function App() {
         eventDate.getDate() === tomorrow.getDate()
       );
     });
-    // Obtener el número de teléfono para cada paciente
-    const patientContacts = await Promise.all(tomorrowEvents.map(event => getContactPhoneNumbers(event.summary, event.id)));
-    if (!patientContacts) {
-      alert("Error obteniendo los números de teléfono de los pacientes. Por favor, inténtalo de nuevo.");
+
+    if (tomorrowEvents.length === 0) {
+      alert("No hay turnos para el día siguiente.");
       return;
     }
-  
-    // Llamar a enviarMensajeWhatsApp para cada paciente
-    patientContacts.forEach(patient => {
-      if (patient) {
-        enviarMensajeWhatsApp(patient.name, formatDate(tomorrowEvents.find(event => event.summary === patient.name).start.dateTime), tomorrowEvents.find(event => event.summary === patient.name).id);
+
+    // Mostrar un popup con cada paciente del día siguiente
+    tomorrowEvents.forEach(patient => {
+      const patientContact = getContactPhoneNumbers(patient.summary, patient.id);
+      if (patientContact) {
+        const confirmation = window.confirm(`¿Quieres enviar un recordatorio a ${patientContact.name}?`);
+        if (confirmation) {
+          enviarMensajeWhatsApp(patientContact.name, formatDate(patient.start.dateTime), patient.id);
+        }
       }
     });
-  }
+}
+
   
   const ak = "AIzaSyC1IHKQnsY55E_ofEqmbIIiv5NaBX18d20"
 
