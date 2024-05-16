@@ -557,7 +557,7 @@ function App() {
       <div className="container">
         {session ? (
           <>
-            <h2>Hey there {session.user.identities[0].identity_data.full_name}</h2>
+            <h2>Bienvenido {session.user.identities[0].identity_data.full_name}</h2>
             <button style= {{backgroundColor: "red"}}onClick={() => signOut()}><b>Sign Out</b></button>
             <hr />
             <p><b>Inicio de tu Evento</b></p>
