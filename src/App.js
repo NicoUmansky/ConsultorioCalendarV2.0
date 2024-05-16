@@ -226,6 +226,8 @@ function App() {
   
       const connectionsData = await connectionsResponse.json();
       console.log("Contactos:", connectionsData);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
   
       if (!connectionsData.results || connectionsData.results.length === 0 || !connectionsData.results[0].person) {
         // El contacto no existe, mostrar un popup para agregar el nuevo contacto
@@ -240,14 +242,16 @@ function App() {
   
           // Crear el nuevo contacto
           await createContact(contactName, phoneNumber);
-  
+
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
           // Volver a buscar el contacto después de la creación
           return await getContactPhoneNumbers(contactName);
         } else {
           return null; // Usuario decidió no crear el contacto
         }
       } 
-      else if (connectionsData.results.length === 1) {
+      else if (connectionsData.results.find(result => result.person.names[0].displayName === contactName)) {
         const personName = connectionsData.results[0].person.names[0].displayName;
         const personPhoneNumbers = connectionsData.results[0].person.phoneNumbers[0].value;
         let dataPatient = {
