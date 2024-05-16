@@ -29,7 +29,7 @@ function App() {
   }, [session]);
 
   if (isLoading) {
-    return <></>;
+    return <div>Cargando...</div>;
   }
 
   const ak = "AIzaSyC1IHKQnsY55E_ofEqmbIIiv5NaBX18d20";
@@ -127,7 +127,7 @@ function App() {
       clearEventForm();
       fetchCalendarEvents();
     } else {
-      alert("Error creating event. Please try again.");
+      alert("Error creando el evento. Por favor intenta de nuevo.");
     }
   };
 
@@ -149,7 +149,7 @@ function App() {
     if (response.ok) {
       fetchCalendarEvents();
     } else {
-      alert("Error deleting event. Please try again.");
+      alert("Error eliminando el evento. Por favor intenta de nuevo.");
     }
   };
 
@@ -293,37 +293,38 @@ function App() {
       {!session ? (
         <button onClick={googleSignIn}>Google Sign In</button>
       ) : (
-        <div>
+        <div className="container">
           <button onClick={signOut}>Cerrar sesión</button>
           <button onClick={fetchCalendarEvents}>Mostrar Eventos</button>
+
+          <div>
+            <input
+              type="text"
+              placeholder="Nombre del evento"
+              value={editEventName}
+              onChange={(e) => setEditEventName(e.target.value)}
+            />
+            <textarea
+              placeholder="Descripción del evento"
+              value={editEventDescription}
+              onChange={(e) => setEditEventDescription(e.target.value)}
+            />
+            <DateTimePicker
+              onChange={setEditStart}
+              value={editStart}
+            />
+            <DateTimePicker
+              onChange={setEditEnd}
+              value={editEnd}
+            />
+            <button onClick={createCalendarEvent}>Crear Evento</button>
+          </div>
         </div>
       )}
 
-      <div>
-        <input
-          type="text"
-          placeholder="Nombre del evento"
-          value={editEventName}
-          onChange={(e) => setEditEventName(e.target.value)}
-        />
-        <textarea
-          placeholder="Descripción del evento"
-          value={editEventDescription}
-          onChange={(e) => setEditEventDescription(e.target.value)}
-        />
-        <DateTimePicker
-          onChange={setEditStart}
-          value={editStart}
-        />
-        <DateTimePicker
-          onChange={setEditEnd}
-          value={editEnd}
-        />
-        <button onClick={createCalendarEvent}>Crear Evento</button>
-      </div>
-
       {showContactOptions && (
-        <div>
+        <div className="contact-options-modal">
+          <button className="close-modal-btn" onClick={() => setShowContactOptions(false)}>X</button>
           <h2>Selecciona el contacto:</h2>
           <select id="contactOptionsSelect">
             {contactOptions.map((option) => (
@@ -337,7 +338,7 @@ function App() {
       )}
 
       {showEvents && (
-        <div className="events-container" style={eventsContainerStyle}>
+        <div className="events-grid" style={eventsContainerStyle}>
           {eventsList.map((event) => (
             <div key={event.id} className="event-item">
               <h2>{event.summary}</h2>

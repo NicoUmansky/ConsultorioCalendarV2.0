@@ -1,5 +1,3 @@
-/* App.css */
-
 .App {
   font-family: 'Segoe UI', sans-serif;
   width: 100vw;
@@ -25,7 +23,6 @@ button {
   padding: 10px 15px;
   border-radius: 5px;
   font-size: 16px;
-  
   background-color: wheat;
   margin: 5px;
 }
@@ -72,8 +69,6 @@ input {
   }
 }
 
-/* App.css */
-
 /* Estilos del modal */
 .contact-options-modal {
   position: fixed;
@@ -95,8 +90,7 @@ input {
   font-size: 16px;
 }
 
-
-.close-modal-btn{
+.close-modal-btn {
   position: fixed;
   top: 5%;
   right: 5%;
