@@ -3,6 +3,7 @@ import { useSession, useSupabaseClient, useSessionContext } from '@supabase/auth
 import DateTimePicker from 'react-datetime-picker';
 import { useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
+import { FcGoogle } from "react-icons/fc";
 
 
 
@@ -617,9 +618,9 @@ function App() {
           </>
           
         ) : (
-          <>
-            <button onClick={() => googleSignIn()}>Inicia Sesion con Google</button>
-          </>
+          <button onClick={googleSignIn}>
+            <FcGoogle style={{ marginRight: '8px' }} /> Inicia Sesión con Google
+          </button>
         )}
       </div>
     </div>
