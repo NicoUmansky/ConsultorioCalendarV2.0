@@ -199,10 +199,11 @@ function App() {
       alert("Error obteniendo los números de teléfono de los pacientes. Por favor, inténtalo de nuevo.");
       return;
     }
-  
+    console.log(patientContacts)
     // Llamar a enviarMensajeWhatsApp para cada paciente
     patientContacts.forEach(patient => {
       if (patient) {
+        console.log(patient)
         enviarMensajeWhatsApp(patient.name, formatDate(tomorrowEvents.find(event => event.summary === patient.name).start.dateTime), tomorrowEvents.find(event => event.summary === patient.name).id);
       }
     });
