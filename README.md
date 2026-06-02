@@ -1,70 +1,118 @@
-# Getting Started with Create React App
+# ConsultorioCalendarV2.0
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicación web para gestionar turnos de consultorio con integración a Google Calendar, Google Contacts y recordatorios por WhatsApp.
 
-## Available Scripts
+## Propósito
 
-In the project directory, you can run:
+El objetivo del proyecto es centralizar la gestión de turnos en una interfaz simple:
 
-### `npm start`
+- Crear eventos de atención para pacientes.
+- Visualizar, editar y eliminar turnos.
+- Buscar o crear contactos asociados a pacientes.
+- Preparar recordatorios por WhatsApp para los turnos.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Funcionalidades principales
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Inicio de sesión con Google** mediante Supabase OAuth.
+- **Creación automática del calendario** `ConsultorioCalendar` (si no existe) en Google Calendar.
+- **Alta de turnos** con:
+  - fecha/hora de inicio,
+  - fecha/hora de finalización,
+  - nombre del paciente,
+  - observaciones.
+- **Listado de eventos** ordenado por fecha.
+- **Eliminación y edición de eventos** desde la vista principal.
+- **Búsqueda de contactos en Google Contacts** por nombre del paciente.
+- **Creación de contacto** si no existe.
+- **Recordatorio por WhatsApp** abriendo un enlace `wa.me` con un mensaje prearmado.
 
-### `npm test`
+## Flujo general de uso
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Iniciar sesión con Google.
+2. Cargar datos del turno (fecha/hora, paciente, observación).
+3. Crear el evento en el calendario del consultorio.
+4. Ver turnos creados y, según necesidad:
+   - editar,
+   - eliminar,
+   - notificar por WhatsApp,
+   - ejecutar la opción de recordatorio de turnos.
 
-### `npm run build`
+## Tecnologías utilizadas
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Según la composición actual del repositorio, el proyecto está desarrollado con:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **JavaScript** (lógica de aplicación y consumo de APIs).
+- **HTML** (estructura base de la app web en `public/index.html`).
+- **CSS** (estilos en `src/App.css` e `src/index.css`).
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Bibliotecas relevantes:
 
-### `npm run eject`
+- React (Create React App).
+- Supabase (`@supabase/supabase-js`, `@supabase/auth-helpers-react`).
+- Google APIs (Calendar y People vía `fetch`).
+- `react-datetime-picker`.
+- `react-icons`.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Instalación y ejecución local
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Requisitos
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- Node.js 18+ recomendado.
+- npm.
+- Credenciales/configuración válidas de Supabase y Google OAuth.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 1) Clonar e instalar dependencias
 
-## Learn More
+```bash
+npm ci
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 2) Configurar variables de entorno
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Crear un archivo `.env` en la raíz con:
 
-### Code Splitting
+```env
+REACT_APP_SUPABASE_URL=tu_url_de_supabase
+REACT_APP_SUPABASE_KEY=tu_anon_key_de_supabase
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+> La aplicación usa estas variables para inicializar el cliente de Supabase.
 
-### Analyzing the Bundle Size
+### 3) Ejecutar en desarrollo
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm run dev
+```
 
-### Making a Progressive Web App
+Abrir en el navegador: `http://localhost:3000`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 4) Build de producción
 
-### Advanced Configuration
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### 5) Tests
 
-### Deployment
+```bash
+npm test
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Estructura del proyecto
 
-### `npm run build` fails to minify
+```text
+ConsultorioCalendarV2.0/
+├─ public/               # Archivos estáticos y HTML base
+├─ src/
+│  ├─ App.js             # Lógica principal (turnos, calendario, contactos, WhatsApp)
+│  ├─ App.css            # Estilos principales de la interfaz
+│  ├─ index.js           # Inicialización de React + Supabase SessionContextProvider
+│  └─ ...                # Archivos auxiliares de CRA
+├─ package.json
+└─ README.md
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Notas de uso
+
+- El envío de recordatorios se realiza abriendo WhatsApp con un mensaje precompletado (no envía mensajes en segundo plano).
+- El acceso a Calendar/Contacts depende de los permisos OAuth de la cuenta de Google usada en el login.
